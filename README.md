@@ -14,6 +14,22 @@ The package is organized into:
 - `simcbctgenerator.cli` for terminal workflows
 - `simcbctgenerator.patient_setup` for patient/loading setup behind the scenes
 
+## Requirements
+
+SimCBCTGenerator requires:
+
+- Python 3.13
+- CUDA 12
+- An NVIDIA GPU with at least 8 GB of VRAM
+
+In practice, a high-end graphics card is required for the projection and reconstruction workloads in this package.
+
+### Windows Notes
+
+On Windows, CuPy CUDA compilation requires the Microsoft C/C++ compiler toolchain (`cl.exe`) from Visual Studio 2019 / MSVC 2019 to work reliably with the CUDA 12 setup used by this project.
+
+If you see an error like `cupy.cuda.compiler.CompileException` with `nvcc` returning a non-zero exit status and an `unsupported Microsoft Visual Studio version` message from `host_config.h`, check that your active `cl.exe` is the Visual Studio 2019 version.
+
 ## Installation
 
 From the project root:
@@ -132,4 +148,21 @@ Or serve locally:
 
 ```bash
 uv run mkdocs serve
+```
+
+## Citation
+
+If you use SimCBCTGenerator in your work, cite:
+
+[Eliminating Registration Bias in Synthetic CT Generation: A Physics-Based Simulation Framework](https://arxiv.org/abs/2602.02130)
+
+```bibtex
+@article{zimmermann2026eliminating,
+  title={Eliminating Registration Bias in Synthetic CT Generation: A Physics-Based Simulation Framework},
+  author={Zimmermann, Lukas and Rauter, Michael and Schmid, Maximilian and Georg, Dietmar and Kn{\"a}usl, Barbara},
+  journal={arXiv preprint arXiv:2602.02130},
+  year={2026},
+  doi={10.48550/arXiv.2602.02130},
+  url={https://arxiv.org/abs/2602.02130}
+}
 ```
