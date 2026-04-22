@@ -1,6 +1,7 @@
 site_name: SimCBCTGenerator
 site_description: Framework-focused documentation for simulated CBCT generation
 site_author: OpenVoxelMed
+site_url: https://openvoxelmed.github.io/simcbctgenerator/
 repo_url: https://github.com/openvoxelmed/simcbctgenerator
 repo_name: openvoxelmed/simcbctgenerator
 

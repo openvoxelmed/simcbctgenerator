@@ -67,7 +67,7 @@ all = [
 Homepage = "https://github.com/openvoxelmed/simcbctgenerator"
 Repository = "https://github.com/openvoxelmed/simcbctgenerator"
 Issues = "https://github.com/openvoxelmed/simcbctgenerator/issues"
-Documentation = "https://github.com/openvoxelmed/simcbctgenerator"
+Documentation = "https://openvoxelmed.github.io/simcbctgenerator/"
 
 [tool.uv]
 package = true
