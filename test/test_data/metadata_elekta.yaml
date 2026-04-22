@@ -1,0 +1,34 @@
+# Dummy metadata for Elekta XVI CBCT system
+# Matches the test config used in testConfigPatient.py
+ct:
+  Manufacturer: Elekta
+  PatientID: DUMMY
+  Modality: CT
+
+cbct:
+  Manufacturer: Elekta
+  Modality: CBCT
+
+  # Tube parameters -> mAs = TubeCurrent * PulseLength / 1000 = 40 * 40 / 1000 = 1.6
+  TubeVoltage: 120
+  TubeCurrent: 40
+  PulseLength: 40
+
+  # Detector (512 x 512 pixels, 0.8 mm spacing -> 409.6 x 409.6 mm)
+  ImagerSizeX: 512
+  ImagerSizeY: 512
+  ImagerResX: 0.8
+  ImagerResY: 0.8
+  DetectorOffsetX: -115.0
+  DetectorOffsetY: 0.0
+
+  # Reconstruction volume
+  ReconstructionSizeX: 410
+  ReconstructionSizeY: 410
+  ReconstructionSizeZ: 66
+  ReconstructionSpacingX: 1.0
+  ReconstructionSpacingY: 1.0
+  ReconstructionSpacingZ: 4.0
+
+  # Acquisition
+  Frames: 660

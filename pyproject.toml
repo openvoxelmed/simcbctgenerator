@@ -1,0 +1,109 @@
+[project]
+name = "simcbctgenerator"
+version = "0.2.0"
+description = "Framework for generating simulated CBCTs with realistic noise and breathing motion"
+readme = "README.md"
+requires-python = ">=3.13"
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "Lukas Zimmermann", email = "lukas.r.m.zimmermann@gmail.com" },
+    { name = "Michael Rauter" },
+]
+keywords = [
+    "CBCT",
+    "cone-beam CT",
+    "radiotherapy",
+    "medical imaging",
+    "simulation",
+    "RTK",
+    "motion modeling",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Healthcare Industry",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+    "Topic :: Scientific/Engineering :: Image Processing",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+dependencies = [
+    "cupy-cuda12x>=13.4.1",
+    "dicomrttool>=2.2.1",
+    "itk-rtk-cuda124>=2.7.0.post1",
+    "pydantic>=2.10.6",
+    "pydicom>=3.0.1",
+    "pyyaml>=6.0",
+    "rich>=13.9.4",
+    "simpleitk-simpleelastix>=2.5.0.dev49",
+    "spekpy>=2.5.3",
+    "tqdm>=4.67.1",
+    "xraydb>=4.5.0",
+    "xdrt @ git+https://github.com/LFetty/xdrt.git",
+]
+
+[project.optional-dependencies]
+segmentation = [
+    "totalsegmentator>=2.0.0",
+    "alphashape>=1.3.1",
+]
+evaluation = [
+    "torch>=2.0.0",
+    "torchvision>=0.15.0",
+    "scipy>=1.10.0",
+    "matplotlib>=3.7.0",
+    "seaborn>=0.12.0",
+    "pandas>=2.0.0",
+]
+all = [
+    "totalsegmentator>=2.0.0",
+    "alphashape>=1.3.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/openvoxelmed/simcbctgenerator"
+Repository = "https://github.com/openvoxelmed/simcbctgenerator"
+Issues = "https://github.com/openvoxelmed/simcbctgenerator/issues"
+Documentation = "https://github.com/openvoxelmed/simcbctgenerator"
+
+[tool.uv]
+package = true
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.ruff.lint.per-file-ignores]
+"examples/*.py" = ["E402"]
+"examples/cli/*.py" = ["E402"]
+"test/test_scripts/*.py" = ["E402"]
+
+[project.scripts]
+simcbct-pipeline-segmentation = "simcbctgenerator.cli.segmentation:pipeline"
+simcbct-pipeline-regression = "simcbctgenerator.cli.regression:pipeline"
+simcbct-pipeline-reconstruction = "simcbctgenerator.cli.reconstruction:pipeline"
+
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "pyqt5>=5.15.11; sys_platform == 'linux'",
+    "ruff>=0.11.4",
+    "pytest>=8.0.0",
+    "pytest-cov>=4.0.0",
+    "mypy>=1.0.0",
+]
+docs = [
+    "mkdocs>=1.5.0",
+    "mkdocs-material>=9.5.0",
+    "mkdocstrings[python]>=0.24.0",
+    "pymdown-extensions>=10.7.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/simcbctgenerator"]

@@ -1,0 +1,34 @@
+# Dummy metadata for Varian OBI CBCT system
+# Matches the Varian system config used in testConfigPatient.py
+ct:
+  Manufacturer: Varian
+  PatientID: DUMMY
+  Modality: CT
+
+cbct:
+  Manufacturer: Varian
+  Modality: CBCT
+
+  # Tube parameters -> mAs = TubeCurrent * PulseLength / 1000 = 30 * 40 / 1000 = 1.2
+  TubeVoltage: 125
+  TubeCurrent: 30
+  PulseLength: 40
+
+  # Detector (1024 x 768 pixels, matching Varian OBI geometry)
+  ImagerSizeX: 1024
+  ImagerSizeY: 768
+  ImagerResX: 0.388
+  ImagerResY: 0.388
+  DetectorOffsetX: -160.0
+  DetectorOffsetY: 0.0
+
+  # Reconstruction volume
+  ReconstructionSizeX: 512
+  ReconstructionSizeY: 512
+  ReconstructionSizeZ: 88
+  ReconstructionSpacingX: 0.908
+  ReconstructionSpacingY: 0.908
+  ReconstructionSpacingZ: 1.988
+
+  # Acquisition
+  Frames: 900

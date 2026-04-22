@@ -1,0 +1,48 @@
+__pycache__/**
+test/test_data/**
+!test/test_data/geometry_elekta.xml
+!test/test_data/geometry_varian.xml
+!test/test_data/metadata_elekta.yaml
+!test/test_data/metadata_varian.yaml
+projections/**
+projection/**
+projections_noise_test/**
+projections_test_dummy/**
+reconstructions/**
+test_data/**
+*pyc
+lists/**
+logs/**
+output/**
+.vscode/**
+test_scripts/**
+build/**
+dist/**
+*egg-info
+list/**
+# Jupyter
+.ipynb_checkpoints/
+Untitled*.ipynb
+
+# Numpy cache
+*.npy
+
+# Docker temp files
+.docker_temp_*
+
+# Private instructions
+CLAUDE.local.md
+
+# Virtual environment
+.venv/
+
+# MkDocs documentation build
+site/
+
+# Python packaging build output
+build/
+
+# Test output scratch dirs and run logs
+test_output_*/
+test_run_results*.log
+*.log
