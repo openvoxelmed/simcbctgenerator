@@ -186,11 +186,11 @@ class GeometryConfig(BaseModel):
 
     @property
     def pixel_size(self) -> tuple[float, float]:
-        """Compute pixel size from detector dimensions."""
+        """Compute detector pixel spacing as ``(x, y)`` in mm."""
         if self._pixel_size is None:
             self._pixel_size = (
+                self.detector_size_w / self.detector_pixels_w,
                 self.detector_size_h / self.detector_pixels_h,
-                self.detector_size_w / self.detector_pixels_w
             )
         return self._pixel_size
 

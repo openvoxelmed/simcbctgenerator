@@ -66,13 +66,13 @@ class SyntheticCBCTReconstruction:
         source.Update()
 
         projection = rtk.ConstantImageSource[self.CPUImageType].New()
-        projection.SetSpacing((self.system_config.pixel_size[1], self.system_config.pixel_size[0], 1))
+        projection.SetSpacing((self.system_config.pixel_size[0], self.system_config.pixel_size[1], 1))
         projection.SetSize((self.system_config.detector_pixels_w,
                             self.system_config.detector_pixels_h,
                             len(self.system_config.effective_angles)))
-        projection.SetOrigin((-(self.system_config.detector_pixels_w-1) / 2 * self.system_config.pixel_size[1],
-                              -(self.system_config.detector_pixels_h-1) / 2 * self.system_config.pixel_size[0],
-                                0.0))
+        projection.SetOrigin((-(self.system_config.detector_pixels_w-1) / 2 * self.system_config.pixel_size[0],
+                      -(self.system_config.detector_pixels_h-1) / 2 * self.system_config.pixel_size[1],
+                      0.0))
         projection.SetConstant(1)
 
         FOVFilterType = rtk.FieldOfViewImageFilter[self.CPUImageType, self.CPUImageType]
@@ -196,10 +196,10 @@ class SyntheticCBCTReconstruction:
 
         projReader = rtk.ProjectionsReader[self.CPUImageType].New()
         projReader.SetFileNames(files)
-        projReader.SetSpacing((self.system_config.pixel_size[1], self.system_config.pixel_size[0], 1))
-        projReader.SetOrigin((-0.5*(self.system_config.detector_pixels_w-1) * self.system_config.pixel_size[1],
-                              -0.5*(self.system_config.detector_pixels_h-1) * self.system_config.pixel_size[0],
-                               0))
+        projReader.SetSpacing((self.system_config.pixel_size[0], self.system_config.pixel_size[1], 1))
+        projReader.SetOrigin((-0.5*(self.system_config.detector_pixels_w-1) * self.system_config.pixel_size[0],
+                              -0.5*(self.system_config.detector_pixels_h-1) * self.system_config.pixel_size[1],
+                              0))
         projReader.Update()
 
         if self.gpu:

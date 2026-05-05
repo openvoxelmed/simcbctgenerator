@@ -126,7 +126,7 @@ class DRRGenerator:
         isocenter=iso_center,
         source_to_detector_distance=self.system_config.effective_source_detector_distance,
         source_to_isocenter_vertical_distance=self.system_config.effective_source_origin_distance,
-        pixel_size=self.system_config.pixel_size[0],
+        pixel_size=self.system_config.pixel_size,
         sensor_height=self.system_config.geometry.detector_pixels_h,
         sensor_width=self.system_config.geometry.detector_pixels_w,
         detector_offset_x=initial_offset_x,

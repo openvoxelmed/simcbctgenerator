@@ -132,11 +132,13 @@ class FrameTransform(HomogeneousObject):
 class CameraIntrinsicTransform(HomogeneousObject):
     """Camera intrinsic parameters."""
 
-    def __init__(self, sensor_height: int, sensor_width: int, pixel_size: float,
+    def __init__(self, sensor_height: int, sensor_width: int, pixel_size: float|tuple[float, float],
                  source_to_detector_distance: float, fx: Optional[float] = None, fy: Optional[float] = None,
                  detector_offset_x: float = 0.0, detector_offset_y: float = 0.0):
         self.sensor_height = sensor_height
         self.sensor_width = sensor_width
+        if isinstance(pixel_size, (int, float)):
+            pixel_size = (pixel_size, pixel_size)
         self.pixel_size = pixel_size
         self.source_to_detector_distance = source_to_detector_distance
         self.detector_offset_x = detector_offset_x
@@ -144,9 +146,9 @@ class CameraIntrinsicTransform(HomogeneousObject):
 
         # Calculate focal lengths if not provided
         if fx is None:
-            fx = source_to_detector_distance / pixel_size
+            fx = source_to_detector_distance / pixel_size[0]
         if fy is None:
-            fy = source_to_detector_distance / pixel_size
+            fy = source_to_detector_distance / pixel_size[1]
 
 
         self.fx = fx
@@ -156,9 +158,9 @@ class CameraIntrinsicTransform(HomogeneousObject):
         self.cx = sensor_width / 2.0
         self.cy = sensor_height / 2.0
         if detector_offset_x != 0.0:
-           self.cx += detector_offset_x / pixel_size
+           self.cx += detector_offset_x / pixel_size[0]
         if detector_offset_y != 0.0:
-           self.cy += detector_offset_y / pixel_size
+           self.cy += detector_offset_y / pixel_size[1]
 
         # Create intrinsic matrix
         data = np.array([

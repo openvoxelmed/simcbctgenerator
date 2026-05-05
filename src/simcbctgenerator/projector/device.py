@@ -43,7 +43,7 @@ class Device:
         self,
         sensor_height: int = 1536,
         sensor_width: int = 1536,
-        pixel_size: float = 0.194,
+        pixel_size: float|tuple[float, float] = 0.194,
         source_to_detector_distance: float = 1020,
         world_from_device: Optional[FrameTransform] = None,
         detector_offset_x: float = 0.0,
@@ -51,6 +51,8 @@ class Device:
     ):
         self.sensor_height = sensor_height
         self.sensor_width = sensor_width
+        if isinstance(pixel_size, (int, float)):
+            pixel_size = (pixel_size, pixel_size)
         self.pixel_size = pixel_size
         self.source_to_detector_distance = source_to_detector_distance
         self.detector_offset_x = detector_offset_x
@@ -78,12 +80,12 @@ class Device:
     @property
     def detector_height(self) -> float:
         """Height of detector in mm."""
-        return self.sensor_height * self.pixel_size
+        return self.sensor_height * self.pixel_size[1]
 
     @property
     def detector_width(self) -> float:
         """Width of detector in mm."""
-        return self.sensor_width * self.pixel_size
+        return self.sensor_width * self.pixel_size[0]
 
     @property
     def device_from_world(self) -> FrameTransform:
@@ -111,7 +113,7 @@ class CBCT(Device):
         source_to_isocenter_horizontal_offset: float = 0,
         sensor_height: int = 1536,
         sensor_width: int = 1536,
-        pixel_size: float = 0.194,
+        pixel_size: float|tuple[float, float] = 0.194,
         world_from_device: Optional[FrameTransform] = None,
         rotate_camera_left: bool = True,
         rotation_direction_clockwise: bool = True,
