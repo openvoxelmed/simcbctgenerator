@@ -80,13 +80,7 @@ class Patient:
     ):
         patient = cls._create_empty(config=config, path=Path(""), allow_multi_plan=False, patient_id=patient_id)
 
-        if reference_cbct is not None:
-            resampler = sitk.ResampleImageFilter()
-            resampler.SetReferenceImage(reference_cbct)
-            resampler.SetInterpolator(sitk.sitkLinear)
-            resampler.SetDefaultPixelValue(-1000)
-            resampler.SetTransform(sitk.Transform())
-            ct_image = resampler.Execute(ct_image)
+        ct_image = sitk.Image(ct_image)
 
         patient.dicom_reader = DicomReaderWriter(description="Challenge", arg_max=True, verbose=False)
         patient.dicom_reader.dicom_handle = ct_image

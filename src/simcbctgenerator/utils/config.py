@@ -145,6 +145,10 @@ class PhysicsConfig(BaseModel):
     threads: int = 8  # CUDA threads
     max_block_index: int = 200  # CUDA block limit
 
+    # Ablation flags — disable individual noise/scatter components
+    no_scatter: bool = False  # Disable scatter simulation (SPR set to 0)
+    no_noise: bool = False    # Disable Poisson noise simulation
+
     #f1: elekta  amplitude = 1.07, std=522
     #varian: amplitude = 1.06, std=939
 

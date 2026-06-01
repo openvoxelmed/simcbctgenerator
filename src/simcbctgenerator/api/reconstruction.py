@@ -61,6 +61,8 @@ class ProjectionPipeline(BaseModel):
     gpu: bool = True
     threads: int = 8
     max_block_index: int = 200
+    no_scatter: bool = False
+    no_noise: bool = False
 
     @field_validator("vendor", mode="before")
     @classmethod
@@ -89,6 +91,8 @@ class ProjectionPipeline(BaseModel):
             gpu=self.gpu,
             threads=self.threads,
             max_block_index=self.max_block_index,
+            no_scatter=self.no_scatter,
+            no_noise=self.no_noise,
         )
 
     def generate_projections(

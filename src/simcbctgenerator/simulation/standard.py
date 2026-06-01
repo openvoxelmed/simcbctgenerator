@@ -43,6 +43,8 @@ class StandardCBCTSimulator(BaseCBCTSimulator):
         gpu: bool = True,
         threads: int = 8,
         max_block_index: int = 200,
+        no_scatter: bool = False,
+        no_noise: bool = False,
     ):
         self.vendor = Vendor.from_value(vendor)
         self.correct_contrast_media = correct_contrast_media
@@ -50,6 +52,8 @@ class StandardCBCTSimulator(BaseCBCTSimulator):
         self.gpu = gpu
         self.threads = threads
         self.max_block_index = max_block_index
+        self.no_scatter = no_scatter
+        self.no_noise = no_noise
 
     @staticmethod
     def compute_isocenter(image: sitk.Image) -> np.ndarray:
@@ -70,6 +74,8 @@ class StandardCBCTSimulator(BaseCBCTSimulator):
             "threads": self.threads,
             "max_block_index": self.max_block_index,
             "polychromatic": self.polychromatic,
+            "no_scatter": self.no_scatter,
+            "no_noise": self.no_noise,
         }
         if self.polychromatic:
             physics_updates.update({"T1": -200.0, "T2": 400.0})
@@ -97,6 +103,8 @@ class StandardCBCTSimulator(BaseCBCTSimulator):
                 "threads": self.threads,
                 "max_block_index": self.max_block_index,
                 "polychromatic": self.polychromatic,
+                "no_scatter": self.no_scatter,
+                "no_noise": self.no_noise,
                 "T1": -200.0 if self.polychromatic else physics.T1,
                 "T2": 400.0 if self.polychromatic else physics.T2,
             })
@@ -140,6 +148,10 @@ class StandardCBCTSimulator(BaseCBCTSimulator):
         except ImportError as exc:
             raise RuntimeError("cupy is required for contrast-media correction.") from exc
 
+        if cm_mask_image.GetSize() != ct_image.GetSize():
+            cm_mask_image = sitk.Resample(
+                cm_mask_image, ct_image, sitk.Transform(), sitk.sitkNearestNeighbor, 0, cm_mask_image.GetPixelID()
+            )
         ct_gpu = cp.asarray(sitk.GetArrayFromImage(ct_image).astype(np.float32))
         mask_gpu = cp.asarray(sitk.GetArrayFromImage(cm_mask_image).astype(np.uint8))
         cm = mask_gpu.astype(bool) & (ct_gpu > 50)

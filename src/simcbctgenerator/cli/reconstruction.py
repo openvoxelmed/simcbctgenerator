@@ -88,6 +88,8 @@ def save_projections_config(
             "saturation_factor": physics_config.saturation_factor,
             "bp_amplitude": physics_config.bp_amplitude,
             "bp_std": physics_config.bp_std,
+            "no_scatter": physics_config.no_scatter,
+            "no_noise": physics_config.no_noise,
         }
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -109,7 +111,9 @@ def main(
     use_totalsegmentator: bool = False,
     motion_seed: Optional[int] = None,
     correct_contrast_media: bool = False,
-    polychromatic: bool = False
+    polychromatic: bool = False,
+    no_scatter: bool = False,
+    no_noise: bool = False,
 ):
     if config is None:
         config = ChallengePatientConfig()
@@ -148,6 +152,8 @@ def main(
             gpu=gpu,
             threads=threads,
             max_block_index=max_block_index,
+            no_scatter=no_scatter,
+            no_noise=no_noise,
         )
 
         output_dir = output_path / patient_id
@@ -245,8 +251,12 @@ def pipeline():
                        help='Use CPU for reconstruction')
 
     # Motion simulation options
-    parser.add_argument('--enable_motion', action='store_true', #default=False,
-                       help='Enable respiratory motion simulation')
+    parser.add_argument('--no_motion', action='store_true',
+                       help='Disable respiratory motion simulation (motion is enabled by default)')
+    parser.add_argument('--no_scatter', action='store_true',
+                       help='Disable scatter simulation (scatter is enabled by default)')
+    parser.add_argument('--no_noise', action='store_true',
+                       help='Disable Poisson noise simulation (noise is enabled by default)')
     parser.add_argument('--motion_type', type=str, default='PELVIS',
                        choices=['PELVIS', 'THORAX'],
                        help='Type of motion model (default: PELVIS)')
@@ -285,7 +295,9 @@ def pipeline():
         use_totalsegmentator=args.use_totalsegmentator,
         motion_seed=args.motion_seed,
         correct_contrast_media=args.correct_contrast_media,
-        polychromatic=args.polychromatic
+        polychromatic=args.polychromatic,
+        no_scatter=args.no_scatter,
+        no_noise=args.no_noise,
     )
 
 

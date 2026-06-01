@@ -254,6 +254,7 @@ class SegmentationPipeline(BaseModel):
         geometry_xml: Optional[Union[str, Path]] = None,
         metadata_yaml: Optional[Union[str, Path]] = None,
         cbct_image: Optional[sitk.Image] = None,
+        cm_mask_image: Optional[sitk.Image] = None,
         motion_config: Optional[MotionConfig] = None,
         random_motion_type: Optional[MotionConfig.MotionType] = None,
         motion_surrogate: Optional[Any] = None,
@@ -265,6 +266,13 @@ class SegmentationPipeline(BaseModel):
         """Generate a simulated CBCT using the standard projection method.
 
         Delegates to :meth:`ProjectionPipeline.run`.
+
+        Parameters
+        ----------
+        cm_mask_image:
+            Optional pre-computed contrast-media mask (e.g. bowel from DICOM
+            RTStruct).  When provided and ``correct_contrast_media=True``,
+            this mask is used directly instead of running TotalSegmentator.
 
         Returns
         -------
@@ -282,6 +290,7 @@ class SegmentationPipeline(BaseModel):
         return proj_pipeline.run(
             ct_image=ct_image,
             cbct_image=cbct_image,
+            cm_mask_image=cm_mask_image,
             system_config=system_config,
             geometry_xml=geometry_xml,
             metadata_yaml=metadata_yaml,
@@ -339,6 +348,7 @@ class SegmentationPipeline(BaseModel):
         output_dir: Union[str, Path] = "output_segmentation",
         cbct_image: Optional[sitk.Image] = None,
         mask_image: Optional[sitk.Image] = None,
+        cm_mask_image: Optional[sitk.Image] = None,
         motion_config: Optional[MotionConfig] = None,
         random_motion_type: Optional[MotionConfig.MotionType] = None,
         motion_surrogate: Optional[Any] = None,
@@ -379,6 +389,11 @@ class SegmentationPipeline(BaseModel):
             (used by the standard method).
         mask_image:
             Optional pre-computed multi-label mask (skips auto-segmentation).
+        cm_mask_image:
+            Optional pre-computed contrast-media mask (e.g. bowel from DICOM
+            RTStruct).  Forwarded to the projection pipeline; when provided
+            and ``correct_contrast_media=True``, used directly instead of
+            running TotalSegmentator for contrast-media correction.
         motion_config / random_motion_type / motion_surrogate:
             Motion parameters (forwarded to ``generate_cbct``).
         phantom_config:
@@ -405,6 +420,7 @@ class SegmentationPipeline(BaseModel):
             simulated_cbct = self.generate_cbct(
                 ct_image=ct_image,
                 cbct_image=cbct_image,
+                cm_mask_image=cm_mask_image,
                 system_config=system_config,
                 geometry_xml=geometry_xml,
                 metadata_yaml=metadata_yaml,

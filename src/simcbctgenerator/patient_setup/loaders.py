@@ -233,7 +233,19 @@ class XVIPatientLoader(PatientLoader):
         else:
             raise ValueError(f"Image center [{patient.config.image_modality.value.image_center}] not defined.")
 
-        patient.dicom_reader.set_contour_names_and_associations(contour_names=patient.config.export_structures)
+        contour_names_to_load = list(patient.config.export_structures)
+        cm_mask = patient.config.cm_mask
+        if cm_mask and cm_mask.lower() not in {s.lower() for s in contour_names_to_load}:
+            if cm_mask.lower() in patient.all_rois:
+                contour_names_to_load.append(cm_mask)
+                logger.info(f"Loading cm_mask structure '{cm_mask}' from RTStruct for contrast media correction")
+            else:
+                logger.info(
+                    f"cm_mask structure '{cm_mask}' not found in RTStruct "
+                    f"(available: {sorted(patient.all_rois)}); will fall back to TotalSegmentator if needed"
+                )
+
+        patient.dicom_reader.set_contour_names_and_associations(contour_names=contour_names_to_load)
         patient.dicom_reader.get_images_and_mask()
         _infer_motion_surrogate(patient)
         patient.set_projector_geometry(iso_center=iso_center)

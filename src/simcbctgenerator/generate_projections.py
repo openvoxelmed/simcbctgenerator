@@ -273,27 +273,32 @@ class DRRGenerator:
         primary_transmission = np.exp(-proj)
 
         # convert from relative intensity to primary count
-
         primary_count = primary_transmission * self.incident_count
 
-        # Estimate scatter: proportional to primary attenuation
-        # More realistic scatter model: scatter is related to the amount of attenuated primary
-        attenuated_primary = (primary_transmission < 0.5)
-        attenuated_vals = primary_count[attenuated_primary]
-        if attenuated_vals.size > 0:
-            min_attenuated_primary = np.percentile(attenuated_vals, 5)
+        # Scatter: proportional to primary attenuation in attenuated regions.
+        # Disabled when no_scatter=True (produces scatter-free projections).
+        if not self.system_config.physics.no_scatter:
+            attenuated_primary = (primary_transmission < 0.5)
+            attenuated_vals = primary_count[attenuated_primary]
+            if attenuated_vals.size > 0:
+                min_attenuated_primary = np.percentile(attenuated_vals, 5)
+            else:
+                min_attenuated_primary = self.incident_count
+            scatter_count = self.system_config.physics.spr * min_attenuated_primary
         else:
-            min_attenuated_primary = self.incident_count
+            scatter_count = 0.0
 
-        scatter_count = self.system_config.physics.spr*min_attenuated_primary
         # Total detected photons
-        total_count = primary_count
-        total_count+= scatter_count #* mask
+        total_count = primary_count + scatter_count
 
         # Poisson noise — RTK formulation:
         #   noisy = max(Poisson(total_count), 1);  noisy_proj = log(I0 / noisy)
-        raw = np.random.poisson(np.maximum(total_count, 0.0))
-        noisy_count = np.maximum(raw, 1).astype(float)  # floor: ≥1 photon (RTK-style)
+        # Disabled when no_noise=True (produces noise-free projections).
+        if not self.system_config.physics.no_noise:
+            raw = np.random.poisson(np.maximum(total_count, 0.0))
+            noisy_count = np.maximum(raw, 1).astype(float)  # floor: ≥1 photon (RTK-style)
+        else:
+            noisy_count = np.maximum(total_count, 1.0)  # same floor, no stochastic sampling
 
         # Convert back to transmission (avoid division by zero)
         transmission = np.divide(noisy_count, self.incident_count)
@@ -334,6 +339,12 @@ class DRRGenerator:
         self.set_projector(patient.iso_center)
 
         projs = []
+
+        # Log active ablation flags so output directories are self-documenting
+        if self.system_config.physics.no_scatter:
+            logger.info('Scatter simulation disabled (no_scatter=True)')
+        if self.system_config.physics.no_noise:
+            logger.info('Poisson noise simulation disabled (no_noise=True)')
 
         # Determine description for progress bar
         desc = "Generating projections with motion" if ct_generator else "Generating projections (static)"

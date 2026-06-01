@@ -55,7 +55,9 @@ def main(patient_path: Path,
          phantom_config: PhantomConfig | None,
          store_real_cbct: bool,
          store_ct: bool,
-         no_motion: bool):
+         no_motion: bool,
+         correct_contrast_media: bool = False,
+         ):
     ct_path = output_path / "imagesTr"
     exported_patients = {}
     if ct_path.exists():
@@ -74,6 +76,7 @@ def main(patient_path: Path,
         priority=list(patient_config.priority),
         use_totalsegmentator=patient_config.use_totalsegmentator,
         phantom_config=phantom_config,
+        correct_contrast_media=correct_contrast_media
     )
 
     for patient_dir in patients:
@@ -91,11 +94,17 @@ def main(patient_path: Path,
         if not patient.valid:
             continue
         try:
+            cm_mask_image = None
+            if patient_config.cm_mask:
+                cm_mask_image = patient.mask_dictionary.get(patient_config.cm_mask)
+                if cm_mask_image is not None:
+                    logger.info(f"Using '{patient_config.cm_mask}' from RTStruct as contrast media mask")
             results = pipeline.run(
                 ct_image=patient.ct_image,
                 system_config=system_config,
                 output_dir=output_path / patient.id,
                 mask_image=patient.combined_label_mask(),
+                cm_mask_image=cm_mask_image,
                 motion_config=None if no_motion else motion_config,
                 motion_surrogate=getattr(patient, 'motion_surrogate', None),
                 phantom_config=phantom_config,
@@ -128,6 +137,8 @@ def pipeline():
     parser.add_argument('--output_path', type=str, default='Dataset0xx_simCBCT', help='output folder where to store the generated synthetic cts.')
     parser.add_argument('--store_real_cbct', action='store_true', help='store the real cbct images.')
     parser.add_argument('--store_ct', action='store_true', help='store the resampled ct images.')
+    parser.add_argument('--correct_contrast_media', action='store_true', #default=False,
+                       help='Apply contrast media correction to CT (only effective when motion is enabled)')
 
     utils.add_patient_arguments(parser)
     utils.add_router_arguments(parser)
@@ -188,7 +199,9 @@ def pipeline():
             T1=args_dict['T1'],
             T2=args_dict['T2'],
             threads=args_dict.get('threads', 8),
-            max_block_index=args_dict.get('max_block_index', 200)
+            max_block_index=args_dict.get('max_block_index', 200),
+            no_scatter=args_dict.get('no_scatter', False),
+            no_noise=args_dict.get('no_noise', False),
         )
 
         geometry_config = GeometryConfig(
@@ -248,7 +261,9 @@ def pipeline():
          phantom_config=phantom_config,
          store_real_cbct=args_dict['store_real_cbct'],
          store_ct=args_dict['store_ct'],
-         no_motion=args_dict['no_motion'])
+         no_motion=args_dict['no_motion'],
+         correct_contrast_media=args.correct_contrast_media,
+         )
 
 if __name__ == '__main__':
     pipeline()

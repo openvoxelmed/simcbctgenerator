@@ -253,6 +253,9 @@ def add_physics_arguments(parser):
     # Execution parameters
     group.add_argument('--threads', type=int, default=8, help='Number of CUDA threads')
     group.add_argument('--max_block_index', type=int, default=200, help='CUDA block limit')
+    # Ablation flags
+    group.add_argument('--no_scatter', action='store_true', help='Disable scatter simulation (scatter is enabled by default)')
+    group.add_argument('--no_noise', action='store_true', help='Disable Poisson noise simulation (noise is enabled by default)')
 
 
 def add_geometry_arguments(parser):
