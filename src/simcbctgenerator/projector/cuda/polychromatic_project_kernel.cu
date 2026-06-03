@@ -199,7 +199,7 @@ extern "C" __global__ void polychromatic_project_kernel(
     /* ================================================================
      * 5.  Spectral integration (O(num_bins), once per pixel)
      *
-     *     At E0 ratio=1 => proj = L_water+L_bone = monochromatic. ✓
+     *     At E0 ratio=1 => proj = L_water+L_bone = monochromatic. 
      * ================================================================ */
     float poly_sum = 0.0f;
 

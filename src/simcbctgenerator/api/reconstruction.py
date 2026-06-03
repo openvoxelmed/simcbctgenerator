@@ -95,26 +95,15 @@ class ProjectionPipeline(BaseModel):
             no_noise=self.no_noise,
         )
 
-    def generate_projections(
-        self,
-        ct_image: sitk.Image,
-        output_dir: Union[str, Path],
-        system_config: Optional[CBCTSystemConfig] = None,
-        geometry_xml: Optional[Union[str, Path]] = None,
-        metadata_yaml: Optional[Union[str, Path]] = None,
+    @staticmethod
+    def _patient_from_image(
+        ct_image: Optional[sitk.Image],
         cbct_image: Optional[sitk.Image] = None,
-        cm_mask_image: Optional[sitk.Image] = None,
-        save_stacked: bool = True,
-        include_beam_profile: bool = False,
-        motion_config: Optional[MotionConfig] = None,
-        random_motion_type: Optional[MotionConfig.MotionType] = None,
-        motion_surrogate: Optional[Any] = None,
-        random_motion_amplitude_range: Tuple[float, float] = (5.0, 20.0),
-        random_motion_frequency_range: Tuple[float, float] = (12.0, 20.0),
-        random_motion_uncertainty_range: Tuple[float, float] = (0.01, 0.05),
-    ) -> tuple[Optional[sitk.Image], Any]:
-        """Generate projections and return `(stacked_projections, system_config)`."""
-        patient = Patient.from_images(
+    ) -> Patient:
+        """Build a bare projection patient from a CT image (single origin shift)."""
+        if ct_image is None:
+            raise ValueError("Provide either a `patient` or a `ct_image`.")
+        return Patient.from_images(
             ct_image=ct_image,
             config=PatientConfig(
                 plan_dir=".",
@@ -128,6 +117,31 @@ class ProjectionPipeline(BaseModel):
             reference_cbct=cbct_image,
             patient_id="projection_pipeline",
         )
+
+    def generate_projections(
+        self,
+        ct_image: Optional[sitk.Image] = None,
+        output_dir: Union[str, Path] = "output_projection",
+        system_config: Optional[CBCTSystemConfig] = None,
+        geometry_xml: Optional[Union[str, Path]] = None,
+        metadata_yaml: Optional[Union[str, Path]] = None,
+        cbct_image: Optional[sitk.Image] = None,
+        cm_mask_image: Optional[sitk.Image] = None,
+        save_stacked: bool = True,
+        include_beam_profile: bool = False,
+        motion_config: Optional[MotionConfig] = None,
+        random_motion_type: Optional[MotionConfig.MotionType] = None,
+        motion_surrogate: Optional[Any] = None,
+        random_motion_amplitude_range: Tuple[float, float] = (5.0, 20.0),
+        random_motion_frequency_range: Tuple[float, float] = (12.0, 20.0),
+        random_motion_uncertainty_range: Tuple[float, float] = (0.01, 0.05),
+        patient: Optional[Patient] = None,
+    ) -> tuple[Optional[sitk.Image], Any]:
+        """Generate projections and return `(stacked_projections, system_config)`.
+
+        Provide either a pre-built ``patient`` or a ``ct_image``.
+        """
+        patient = patient or self._patient_from_image(ct_image, cbct_image)
         simulator = self._create_simulator()
         result = simulator.run(
             patient=patient,
@@ -170,8 +184,8 @@ class ProjectionPipeline(BaseModel):
 
     def run(
         self,
-        ct_image: sitk.Image,
-        output_dir: Union[str, Path],
+        ct_image: Optional[sitk.Image] = None,
+        output_dir: Union[str, Path] = "output_projection",
         system_config: Optional[CBCTSystemConfig] = None,
         geometry_xml: Optional[Union[str, Path]] = None,
         metadata_yaml: Optional[Union[str, Path]] = None,
@@ -184,28 +198,25 @@ class ProjectionPipeline(BaseModel):
         random_motion_amplitude_range: Tuple[float, float] = (5.0, 20.0),
         random_motion_frequency_range: Tuple[float, float] = (12.0, 20.0),
         random_motion_uncertainty_range: Tuple[float, float] = (0.01, 0.05),
-    ) -> sitk.Image:
+        patient: Optional[Patient] = None,
+        return_result: bool = False,
+    ):
         """Generate projections and reconstruct in one call.
+
+        Provide either a pre-built ``patient`` (its existing projector geometry
+        is reused as-is) or a ``ct_image`` (a patient is built from it). Passing
+        a patient avoids re-shifting an already-positioned CT, keeping the
+        reconstruction in the patient's coordinate frame.
+
+        Returns the reconstructed CBCT, or the full ``SimulationResult`` (which
+        also carries the FOV mask) when ``return_result=True``.
 
         See generate_projections for motion parameter documentation.
         """
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        patient = Patient.from_images(
-            ct_image=ct_image,
-            config=PatientConfig(
-                plan_dir=".",
-                ct_dir=".",
-                cbct_dir=".",
-                export_structures=[],
-                priority=[],
-                image_modality="synrad",
-                use_totalsegmentator=False,
-            ),
-            reference_cbct=cbct_image,
-            patient_id="projection_pipeline",
-        )
+        patient = patient or self._patient_from_image(ct_image, cbct_image)
         result = self._create_simulator().run(
             patient=patient,
             system_config=system_config,
@@ -222,4 +233,4 @@ class ProjectionPipeline(BaseModel):
             random_motion_uncertainty_range=random_motion_uncertainty_range,
             cleanup_temp=cleanup_temp,
         )
-        return result.cbct
+        return result if return_result else result.cbct

@@ -28,6 +28,8 @@ from simcbctgenerator.utils.config import PatientConfig
 from pathlib import Path
 from argparse import ArgumentParser
 import numpy as np
+import shutil
+import tempfile
 from simcbctgenerator import utils
 from typing import TYPE_CHECKING
 
@@ -93,20 +95,19 @@ def main(patient_path: Path,
         patient = Patient(patient_config, patient_dir)
         if not patient.valid:
             continue
+        # Scratch dir for projection/reconstruction intermediates. Kept outside
+        # the dataset root so the output folder only ever holds the nnUNet layout
+        # (imagesTr/labelsTr/...); removed once the deliverables are extracted.
+        work_dir = Path(tempfile.mkdtemp(prefix=f"simcbct_{patient.id}_"))
         try:
-            cm_mask_image = None
-            if patient_config.cm_mask:
-                cm_mask_image = patient.mask_dictionary.get(patient_config.cm_mask)
-                if cm_mask_image is not None:
-                    logger.info(f"Using '{patient_config.cm_mask}' from RTStruct as contrast media mask")
+            # Pass the loaded patient straight through: the simulator reuses its
+            # projector geometry, masks, motion surrogate and cm_mask, so the
+            # CBCT, labels and resampled CT all share one coordinate frame.
             results = pipeline.run(
-                ct_image=patient.ct_image,
+                patient=patient,
                 system_config=system_config,
-                output_dir=output_path / patient.id,
-                mask_image=patient.combined_label_mask(),
-                cm_mask_image=cm_mask_image,
+                output_dir=work_dir,
                 motion_config=None if no_motion else motion_config,
-                motion_surrogate=getattr(patient, 'motion_surrogate', None),
                 phantom_config=phantom_config,
                 cleanup_temp=True,
             )
@@ -125,6 +126,8 @@ def main(patient_path: Path,
                 sitk.WriteImage(results['resampled_ct'], str(real_ct_path / f"{patient.id}.nii.gz"))
         except MemoryError:
             logger.error(f'Out of Memory error for patient {ID}', exc_info=True)
+        finally:
+            shutil.rmtree(work_dir, ignore_errors=True)
 
 def pipeline():
     parser = ArgumentParser('synthetic CBCT generation pipeline')

@@ -41,6 +41,7 @@ from pydantic import BaseModel, field_validator
 
 from simcbctgenerator.api.phantom import PhantomPipeline
 from simcbctgenerator.api.reconstruction import ProjectionPipeline
+from simcbctgenerator.patient import Patient
 from simcbctgenerator.utils.config import CBCTSystemConfig, MotionConfig, Vendor
 from simcbctgenerator.utils.config import PhantomConfig
 
@@ -248,8 +249,8 @@ class SegmentationPipeline(BaseModel):
 
     def generate_cbct(
         self,
-        ct_image: sitk.Image,
-        output_dir: Union[str, Path],
+        ct_image: Optional[sitk.Image] = None,
+        output_dir: Union[str, Path] = "output_segmentation",
         system_config: Optional[CBCTSystemConfig] = None,
         geometry_xml: Optional[Union[str, Path]] = None,
         metadata_yaml: Optional[Union[str, Path]] = None,
@@ -262,7 +263,9 @@ class SegmentationPipeline(BaseModel):
         random_motion_frequency_range: Tuple[float, float] = (12.0, 20.0),
         random_motion_uncertainty_range: Tuple[float, float] = (0.01, 0.05),
         cleanup_temp: bool = True,
-    ) -> sitk.Image:
+        patient: Optional[Patient] = None,
+        return_result: bool = False,
+    ):
         """Generate a simulated CBCT using the standard projection method.
 
         Delegates to :meth:`ProjectionPipeline.run`.
@@ -289,6 +292,8 @@ class SegmentationPipeline(BaseModel):
         )
         return proj_pipeline.run(
             ct_image=ct_image,
+            patient=patient,
+            return_result=return_result,
             cbct_image=cbct_image,
             cm_mask_image=cm_mask_image,
             system_config=system_config,
@@ -341,7 +346,7 @@ class SegmentationPipeline(BaseModel):
 
     def run(
         self,
-        ct_image: sitk.Image,
+        ct_image: Optional[sitk.Image] = None,
         system_config: Optional[CBCTSystemConfig] = None,
         geometry_xml: Optional[Union[str, Path]] = None,
         metadata_yaml: Optional[Union[str, Path]] = None,
@@ -357,6 +362,7 @@ class SegmentationPipeline(BaseModel):
         random_motion_uncertainty_range: Tuple[float, float] = (0.01, 0.05),
         phantom_config: Optional[PhantomConfig] = None,
         cleanup_temp: bool = True,
+        patient: Optional[Patient] = None,
     ) -> Dict[str, Any]:
         """Run the full segmentation pipeline: CBCT generation + organ masks.
 
@@ -413,12 +419,24 @@ class SegmentationPipeline(BaseModel):
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
 
+        # Resolve a single patient: reuse the caller's (its projector geometry is
+        # kept) or build one from the CT. Everything downstream — projection,
+        # organ masks, CT resampling — then reads from this one patient/frame,
+        # so the CBCT, labels, and resampled CT align by construction.
+        if patient is None:
+            patient = ProjectionPipeline._patient_from_image(ct_image, cbct_image)
+        ct_image = patient.ct_image
+        if mask_image is None:
+            mask_image = patient.combined_label_mask()
+
         fov_mask: Optional[sitk.Image] = None
 
         if self.method == "standard":
             logger.info("Generating simulated CBCT (standard projection method)")
-            simulated_cbct = self.generate_cbct(
+            sim_result = self.generate_cbct(
                 ct_image=ct_image,
+                patient=patient,
+                return_result=True,
                 cbct_image=cbct_image,
                 cm_mask_image=cm_mask_image,
                 system_config=system_config,
@@ -433,6 +451,15 @@ class SegmentationPipeline(BaseModel):
                 random_motion_uncertainty_range=random_motion_uncertainty_range,
                 cleanup_temp=cleanup_temp,
             )
+            # FOV mask from the reconstructor — used to clip the CT and labels to
+            # the same field of view the CBCT is reconstructed in.
+            simulated_cbct = sim_result.cbct
+            fov_mask = sim_result.fov_mask
+            if fov_mask is None:
+                logger.warning(
+                    "Reconstruction returned no FOV mask; CT and labels will not "
+                    "be clipped to the CBCT field of view."
+                )
         else:
             logger.info("Generating simulated CBCT (phantom method)")
             simulated_cbct, fov_mask = self.generate_cbct_phantom(
